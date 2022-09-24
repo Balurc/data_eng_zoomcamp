@@ -370,7 +370,7 @@ Next we will create 2 resources in GCP environment, one for our Data Lake (Googl
 
 ### Terraform Basics & Installation
 
-In this course we will user <a href="https://www.terraform.io/use-cases/infrastructure-as-code" target="_blank">Terraform</a> to provision our infrastructure resources as code. Terraform is an open source infrastructure as a code tool. 
+In this course we will use <a href="https://www.terraform.io/use-cases/infrastructure-as-code" target="_blank">Terraform</a> to provision our infrastructure resources as code. Terraform is an open source infrastructure as a code tool. 
 - It allows us to define both on-premises and cloud resources in human-readable configuration files that can be easily versioned, reused, and shared. So we can so think of this as a git version control but for infrastructure. 
 - It also allows us to bypass the cloud vendor GUIs.
 
