@@ -2,7 +2,9 @@
 
 The course will teach us the fundamentals of data engineering with modern data technologies such as Google Cloud Platform (GCS & Bigquery), Terraform, Docker, Airflow, dbt, Kafka and Spark. It will teach us the basics of how to design and develop systems for collecting, storing, transforming and analyzing data as per this <a href="https://github.com/DataTalksClub/data-engineering-zoomcamp#architecture-diagram" target="_blank">architecture</a>. Throughout the course, we will use <a href="https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page" target="_blank">New York's Taxi and Limousine Corporation's Trip Records Dataset</a>.
 
-This week course will cover the introduction and basic setups. We will be introduced to Docker, Postgres, Google Cloud Platform and Terraform.
+For additional learning, the tutors recommend this book: <a href="https://www.amazon.com/Designing-Data-Intensive-Applications-Reliable-Maintainable/dp/1449373321">Designing Data-Intensive Application</a>. Another book that I would recommend is <a href="https://www.amazon.com/Fundamentals-Data-Engineering-Robust-Systems/dp/1098108302">Fundamentals of Data Engineering</a>.
+
+This week's course will cover the introduction and basic setups. We will be introduced to Docker, Postgres, Google Cloud Platform and Terraform.
 
 ## Docker & Postgres
 
