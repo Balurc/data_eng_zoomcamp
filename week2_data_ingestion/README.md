@@ -389,7 +389,7 @@ In this section we will demonstrate how to ingest data to our local postgress da
 
 ### Moving Files from AWS to GPC with Transfer Service
 
-Up untill now we have used airflow dags to pull and move our data accross different storages, but GCP also has service called `Transfer Service` that allows us to pull data from variety of different sources into our GCS and move data between othe cloud storage providers (S3, Azure Blob, etc).
+Up untill now we have used airflow dags to pull and move our data accross different storages, but GCP also has service called `Transfer Service` that allows us to pull data from different sources into our GCS and move data between other cloud storage providers (S3, Azure Blob, etc).
 
 We can either use the GCP's UI or Terraform to perform this service.
 #### GCP UI's Method
