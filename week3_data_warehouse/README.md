@@ -16,6 +16,7 @@ Data warehouse is a data repository system that stores and aggregates historical
 
 When talking about data warehouse, we also need to talk about data processing systems. There are 2 data processing systems:
 - Online Transactional Processing (OLTP). OLTP captures and maintains trascational-based data. Each transaction involves individual database records made up of multiple columns. OLTP databases are read, written, and updated frequently.
+
 - Online Analytical Processing (OLAP). OLAP applies complex queries to historical data, aggregated from the data source (including OLTP databases). OLAP system is usually used for for data mining, analytics, and business intelligence projects.
 
 The below table shows the difference between OLTP and OLAP.
@@ -65,7 +66,7 @@ BigQuery tables can be partitioned into smaller tables. By dividing a large tabl
 
 ![](images/partition.png)
 
-We can partition a table by (with a partitions limit of 4000):
+We can partition a table by (with partitions limit of 4000):
 - Time-unit column: we can select between daily, hourly and monthly (TIMESTAMP, DATE, or DATETIME column in the table).
 - Ingestion time: based on the timestamp when BigQuery ingests the data.
 - Integer range: based on an integer column.
@@ -146,8 +147,11 @@ Best practices for <a href="https://cloud.google.com/bigquery/docs/best-practice
 
 Knowing the internals of BigQuery might be beneficial for our data career and journey (such as building data products). The technologies used inside <a href="https://cloud.google.com/blog/products/data-analytics/new-blog-series-bigquery-explained-overview" target="_blank">BigQuery architecture</a> are:
 1. Colossus. cluster-level file system, successor to the Google File System (GFS). BigQuery leverages the columnar storage format and compression algorithm to store data in Colossus, optimized for reading large amounts of structured data. Colossus also handles replication, recovery (when disks crash) and distributed management (so there is no single point of failure).
+
 2. Jupiter. Jupiter allows compute and storage (connects Dremel and Colossus) talk to each other through the petabit Jupiter network.
+
 3. Dremel. Dremel is a query execution engine, a large multi-tenant cluster that executes SQL queries. Dremel is compute and turns SQL queries into execution trees.
+
 4. Borg. BigQuery is orchestrated via Borg. The mixers and slots are all run by Borg, which allocates hardware resources.
 
 ![](images/internals.png)
