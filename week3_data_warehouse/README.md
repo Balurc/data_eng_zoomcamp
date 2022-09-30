@@ -179,135 +179,135 @@ For an example, let's create a basic linear regression model to predict the tip 
   - For example we need to convert `PULocationID` into categorical (`STRING`) instead of `INTEGER`. For more on <a href="https://cloud.google.com/bigquery-ml/docs/reference/standard-sql/bigqueryml-syntax-preprocess-overview" target="_blank">you can visit here</a>.
   - Drop all records that has 0 `tip_amount`.
 
-    CREATE OR REPLACE TABLE `your_project_name.trips_data_all.yellow_tripdata_ml` (
-      `passenger_count` INTEGER,
-      `trip_distance` FLOAT64,
-      `PULocationID` STRING,
-      `DOLocationID` STRING,
-      `payment_type` STRING,
-      `fare_amount` FLOAT64,
-      `tolls_amount` FLOAT64,
-      `tip_amount` FLOAT64
-    ) AS (
-      SELECT passenger_count, trip_distance, CAST(PULocationID AS STRING), CAST(DOLocationID AS STRING), CAST(payment_type AS STRING), fare_amount, tolls_amount, tip_amount
-      FROM `trips_data_all.yellow_tripdata_partitoned`
-      WHERE fare_amount != 0
-    );
+        CREATE OR REPLACE TABLE `your_project_name.trips_data_all.yellow_tripdata_ml` (
+          `passenger_count` INTEGER,
+          `trip_distance` FLOAT64,
+          `PULocationID` STRING,
+          `DOLocationID` STRING,
+          `payment_type` STRING,
+          `fare_amount` FLOAT64,
+          `tolls_amount` FLOAT64,
+          `tip_amount` FLOAT64
+        ) AS (
+          SELECT passenger_count, trip_distance, CAST(PULocationID AS STRING), CAST(DOLocationID AS STRING), CAST(payment_type AS STRING), fare_amount, tolls_amount, tip_amount
+          FROM `trips_data_all.yellow_tripdata_partitoned`
+          WHERE fare_amount != 0
+        );
 
 2. Create a model with default setting. Named the model as `tip_model` and specify the `model_type` as `linear_reg`, `input_label_cols` which is the variable that we want to predict as `tip_amount` and `DATA_SPLIT_METHOD` as `AUTO_SPLIT` for splitting the data into training and testing dataset.
 
-    CREATE OR REPLACE MODEL `your_project_name.trips_data_all.tip_model`
-    OPTIONS (
-      model_type='linear_reg',
-      input_label_cols=['tip_amount'],
-      DATA_SPLIT_METHOD='AUTO_SPLIT'
-    ) AS
-    SELECT
-      *
-    FROM
-      `your_project_name.trips_data_all.yellow_tripdata_ml`
-    WHERE
-      tip_amount IS NOT NULL;
+        CREATE OR REPLACE MODEL `your_project_name.trips_data_all.tip_model`
+        OPTIONS (
+          model_type='linear_reg',
+          input_label_cols=['tip_amount'],
+          DATA_SPLIT_METHOD='AUTO_SPLIT'
+        ) AS
+        SELECT
+          *
+        FROM
+          `your_project_name.trips_data_all.yellow_tripdata_ml`
+        WHERE
+          tip_amount IS NOT NULL;
 
-  Next, we can check our features information with:
+   Next, we can check our features information with:
 
-    SELECT * FROM ML.FEATURE_INFO(MODEL `your_project_name.trips_data_all.tip_model`);
+        SELECT * FROM ML.FEATURE_INFO(MODEL `your_project_name.trips_data_all.tip_model`);
 
 3. Evaluate the model. We can simply use `ML.EVALUATE` to validate our model, as shown below:
 
-    SELECT
-      *
-    FROM
-    ML.EVALUATE(
-      MODEL `your_project_name.trips_data_all.tip_model`, (
         SELECT
           *
         FROM
-          `your_project_name.trips_data_all.yellow_tripdata_ml`
-        WHERE
-          tip_amount IS NOT NULL
-      )
-    );
+        ML.EVALUATE(
+          MODEL `your_project_name.trips_data_all.tip_model`, (
+            SELECT
+              *
+            FROM
+              `your_project_name.trips_data_all.yellow_tripdata_ml`
+            WHERE
+              tip_amount IS NOT NULL
+          )
+        );
 
 4. Prediction. We use `ML.PREDICT` statement to make some predictions. The `SELECT` statement within `ML.PREDICT` provides the records for which we want to make predictions.
 
-    SELECT
-      *
-    FROM
-    ML.PREDICT(
-      MODEL `your_project_name.trips_data_all.tip_model`, (
         SELECT
           *
         FROM
-          `your_project_name.trips_data_all.yellow_tripdata_ml`
-        WHERE
-          tip_amount IS NOT NULL
-      )
-    );
+        ML.PREDICT(
+          MODEL `your_project_name.trips_data_all.tip_model`, (
+            SELECT
+              *
+            FROM
+              `your_project_name.trips_data_all.yellow_tripdata_ml`
+            WHERE
+              tip_amount IS NOT NULL
+          )
+        );
 
-  We can also use `ML.EXPLAIN_PREDICT` statement to return the prediction results along with the most important features that were involved in calculating the prediction. `STRUCT(3)` will return the top 3 features.
+   We can also use `ML.EXPLAIN_PREDICT` statement to return the prediction results along with the most important features that were involved in calculating the prediction. `STRUCT(3)` will return the top 3 features.
 
-    SELECT
-      *
-    FROM
-    ML.EXPLAIN_PREDICT(
-      MODEL `your_project_name.trips_data_all.tip_model`,(
         SELECT
           *
         FROM
-          `your_project_name.trips_data_all.yellow_tripdata_ml`
-        WHERE
-          tip_amount IS NOT NULL
-      ), STRUCT(3 as top_k_features)
-    );
+        ML.EXPLAIN_PREDICT(
+          MODEL `your_project_name.trips_data_all.tip_model`,(
+            SELECT
+              *
+            FROM
+              `your_project_name.trips_data_all.yellow_tripdata_ml`
+            WHERE
+              tip_amount IS NOT NULL
+          ), STRUCT(3 as top_k_features)
+        );
 
 5. Parameter tuning. In BigQuery we can perform hyperparameter tuning by stating the regularizations that we want to use when create the model (`l1_reg` and `l2_reg`).
 
-    CREATE OR REPLACE MODEL `your_project_name.trips_data_all.tip_hyperparam_model`
-    OPTIONS (
-      model_type='linear_reg',
-      input_label_cols=['tip_amount'],
-      DATA_SPLIT_METHOD='AUTO_SPLIT',
-      num_trials=5,
-      max_parallel_trials=2,
-      l1_reg=hparam_range(0, 20),
-      l2_reg=hparam_candidates([0, 0.1, 1, 10])
-    ) AS
-    SELECT
-    *
-    FROM
-    `your_project_name.trips_data_all.yellow_tripdata_ml`
-    WHERE
-    tip_amount IS NOT NULL;
+        CREATE OR REPLACE MODEL `your_project_name.trips_data_all.tip_hyperparam_model`
+        OPTIONS (
+          model_type='linear_reg',
+          input_label_cols=['tip_amount'],
+          DATA_SPLIT_METHOD='AUTO_SPLIT',
+          num_trials=5,
+          max_parallel_trials=2,
+          l1_reg=hparam_range(0, 20),
+          l2_reg=hparam_candidates([0, 0.1, 1, 10])
+        ) AS
+        SELECT
+        *
+        FROM
+        `your_project_name.trips_data_all.yellow_tripdata_ml`
+        WHERE
+        tip_amount IS NOT NULL;
 
 6. Deployment. We can deploy our model using Docker containers by running <a href="https://www.tensorflow.org/tfx/serving/docker" target="_blank">TensorFlow Serving</a>. Follow these steps as referenced from <a href="https://cloud.google.com/bigquery-ml/docs/export-model-tutorial" target="_blank">here</a>:
- - Authenticate to your GCP. Go to terminal and run `gcloud auth login`.
+     - Authenticate to your GCP. Go to terminal and run `gcloud auth login`.
 
- - Export the model to a Cloud Storage bucket with this command `bq --project_id your_project_id extract -m trips_data_all.tip_model gs://taxi_ml_model/tip_model`.
+     - Export the model to a Cloud Storage bucket with this command `bq --project_id your_project_id extract -m trips_data_all.tip_model gs://taxi_ml_model/tip_model`.
 
- - Download the exported model files to a temporary directory, `mkdir /tmp/model` and `gsutil cp -r gs://taxi_ml_model/tip_model /tmp/model`.
+     - Download the exported model files to a temporary directory, `mkdir /tmp/model` and `gsutil cp -r gs://taxi_ml_model/tip_model /tmp/model`.
 
- - Create a version subdirectory.
+     - Create a version subdirectory.
 
-      mkdir -p serving_dir/tip_model/1
-      cp -r /tmp/model/tip_model/* serving_dir/tip_model/1
-      rm -r /tmp/model
+              mkdir -p serving_dir/tip_model/1
+              cp -r /tmp/model/tip_model/* serving_dir/tip_model/1
+              rm -r /tmp/model
 
- - Pull the TensorFlow Serving Docker image `docker pull tensorflow/serving`.
+     - Pull the TensorFlow Serving Docker image `docker pull tensorflow/serving`.
 
- - Run the Docker container.
+     - Run the Docker container.
 
-      docker run \
-        -p 8501:8501 \
-        --mount type=bind,source=`pwd`/serving_dir/tip_model,target=/models/tip_model \
-        -e MODEL_NAME=tip_model \
-        -t tensorflow/serving &
+              docker run \
+                -p 8501:8501 \
+                --mount type=bind,source=`pwd`/serving_dir/tip_model,target=/models/tip_model \
+                -e MODEL_NAME=tip_model \
+                -t tensorflow/serving &
 
- - Run a prediction with curl.
+     - Run a prediction with curl.
 
-      curl \
-        -d '{"instances": [{"passenger_count":1, "trip_distance":12.2, "PULocationID":"193", "DOLocationID":"264", "payment_type":"2","fare_amount":20.4,"tolls_amount":0.0}]}' \
-        -X POST http://localhost:8501/v1/models/tip_model:predict
+              curl \
+                -d '{"instances": [{"passenger_count":1, "trip_distance":12.2, "PULocationID":"193", "DOLocationID":"264", "payment_type":"2","fare_amount":20.4,"tolls_amount":0.0}]}' \
+                -X POST http://localhost:8501/v1/models/tip_model:predict
 
 For more on how to best use BigQuery ML, <a href="https://cloud.google.com/bigquery-ml/docs" target="_blank">you can visit here</a>.
 
@@ -328,31 +328,31 @@ Here are the steps to create BigQuery tables (external & partitioned) from the p
 
 3. Now, let's start to create our dag. Go to `data_ingestion_gcs_dag.py` file and rename it to `gcs_to_bq_dag.py` and remove some of these lines as we are not going to use them.
 
-    from airflow.operators.bash import BashOperator
-    from airflow.operators.python import PythonOperator
-    from google.cloud import storage
+        from airflow.operators.bash import BashOperator
+        from airflow.operators.python import PythonOperator
+        from google.cloud import storage
 
-    dataset_file = "yellow_tripdata_2021-01.parquet"
-    dataset_url = f"https://d37ci6vzurychx.cloudfront.net/trip-data/{dataset_file}"
-    upload_to_gcs fuction
-    download_dataset_task
-    local_to_gcs_task
+        dataset_file = "yellow_tripdata_2021-01.parquet"
+        dataset_url = f"https://d37ci6vzurychx.cloudfront.net/trip-data/{dataset_file}"
+        upload_to_gcs fuction
+        download_dataset_task
+        local_to_gcs_task
 
 4. Import these additional libraries.
 
-    from airflow.providers.google.cloud.operators.bigquery import BigQueryCreateExternalTableOperator, BigQueryInsertJobOperator
-    from airflow.providers.google.cloud.transfers.gcs_to_gcs import GCStoGCSOperator
+        from airflow.providers.google.cloud.operators.bigquery import BigQueryCreateExternalTableOperator, BigQueryInsertJobOperator
+        from airflow.providers.google.cloud.transfers.gcs_to_gcs import GCStoGCSOperator
 
   - `BigQueryCreateExternalTableOperator` and `BigQueryInsertJobOperator` is used to create external and partitioned tables.
   - `GCStoGCSOperator` is used to organized the files in our GCS.
 
 5. Create these variables to help us in processing the dags.
 
-    DATASET = "tripdata"
-    COLOUR_RANGE = {"yellow": "tpep_pickup_datetime", "green": "lpep_pickup_datetime"}
-    INSERT_QUERY = {"yellow": "SELECT * EXCEPT(airport_fee)", 'green': "SELECT * EXCEPT(ehail_fee)"}
-    INPUT_PART = "raw"
-    INPUT_FILETYPE = "parquet"
+        DATASET = "tripdata"
+        COLOUR_RANGE = {"yellow": "tpep_pickup_datetime", "green": "lpep_pickup_datetime"}
+        INSERT_QUERY = {"yellow": "SELECT * EXCEPT(airport_fee)", 'green': "SELECT * EXCEPT(ehail_fee)"}
+        INPUT_PART = "raw"
+        INPUT_FILETYPE = "parquet"
 
   - `COLOUR_RANGE` will be used to loop through all the filenames.
   - `INSERT_QUERY` to ignore some columns in yellow and green taxi tables that caused some errors (unmatched data types). `Parquet column 'airport_fee' has type INT32 which does not match the target cpp_type DOUBLE`. `Parquet column 'ehail_fee' has type INT32 which does not match the target cpp_type DOUBLE`.
@@ -361,16 +361,16 @@ Here are the steps to create BigQuery tables (external & partitioned) from the p
 6. Next, change the `dag_id` to `gcs_2_bq_dag` and create a for loop that will loop through all out taxi types (yellow & green) data and creating 3 tasks:
   - Task of organizing our file in GCS to ease our BigQuery table creation, `move_files_gcs_task`. I set the `move_object` to `False` as I want to leave a copy of the file in `raw` folder. Switch it to `True` if you want to permanently move the files out of the `raw` folder.
 
-      for colour, ds_col in COLOUR_RANGE.items():
+         for colour, ds_col in COLOUR_RANGE.items():
 
-          move_files_gcs_task = GCSToGCSOperator(
-              task_id=f'move_{colour}_{DATASET}_files_task',
-              source_bucket=BUCKET,
-              source_object=f'{INPUT_PART}/{colour}_{DATASET}*.{INPUT_FILETYPE}',
-              destination_bucket=BUCKET,
-              destination_object=f'{colour}/{colour}_{DATASET}',
-              move_object=False
-          )
+              move_files_gcs_task = GCSToGCSOperator(
+                  task_id=f'move_{colour}_{DATASET}_files_task',
+                  source_bucket=BUCKET,
+                  source_object=f'{INPUT_PART}/{colour}_{DATASET}*.{INPUT_FILETYPE}',
+                  destination_bucket=BUCKET,
+                  destination_object=f'{colour}/{colour}_{DATASET}',
+                  move_object=False
+              )
 
   - Task of creating BigQuery external tables, `bigquery_external_table_task`.
 
@@ -389,6 +389,7 @@ Here are the steps to create BigQuery tables (external & partitioned) from the p
                 },
             },
         )
+        
   - Task of creating partitioned tables from the external tables, `bq_create_partitioned_table_job`. `CREATE_BQ_TBL_QUERY` contains an instruction to create partition tables that will later be passed on to `BigQueryInsertJobOperator`.
 
         CREATE_BQ_TBL_QUERY = (
@@ -423,28 +424,33 @@ Here are the steps to create BigQuery tables (external & partitioned) from the p
 
 ## Homework
 
-You can see the queries here.
+You can see the queries <a href="https://github.com/Balurc/data_eng_zoomcamp/blob/main/week3_data_warehouse/homework/homework.sql" target="_blank">here</a>.
 
-### Question 1: What is count for fhv vehicles data for year 2019?
-The answer is 43261276.
+### Question 1: 
+What is count for fhv vehicles data for year 2019? The answer is 43261276.
 
-### Question 2: How many distinct dispatching_base_num we have in fhv for 2019?
-The answer is 799.
+### Question 2: 
+How many distinct dispatching_base_num we have in fhv for 2019? The answer is 799.
 
-### Question 3: What is the best strategy to optimise if a query always filter by dropoff_datetime and order by dispatching_base_num?
+### Question 3: 
+What is the best strategy to optimise if a query always filter by dropoff_datetime and order by dispatching_base_num?
 The answer is partition by dropoff_datetime (TIMESTAMP) and cluster by dispatching_base_num (STRING/CATEGORICAL).
 
-### Question 4: What is the count, estimated and actual data processed for query which counts trip between 2019/01/01 and 2019/03/31 for dispatching_base_num B00987, B02060, B02279?
+### Question 4: 
+What is the count, estimated and actual data processed for query which counts trip between 2019/01/01 and 2019/03/31 for dispatching_base_num B00987, B02060, B02279?
 The answer is:
+
     Count: 28058
     Estimated data processed: 421.1MB
     Actual data processed: 157MB
-
-### Question 5: What will be the best partitioning or clustering strategy when filtering on dispatching_base_num and SR_Flag?
+    
+### Question 5: 
+What will be the best partitioning or clustering strategy when filtering on dispatching_base_num and SR_Flag?
 The answer is cluster by dispatching_base_num and SR_FLAG (if its a STRING, or if its an INTEGER, use partition).
 
-### Question 6: What improvements can be seen by partitioning and clustering for data size less than 1 GB?
+### Question 6: 
+What improvements can be seen by partitioning and clustering for data size less than 1 GB?
 The answer is there would be no improvements, and even could be worse due to metadata. We can see the improvements with a larger data size.
 
-### Question 7: In which format does BigQuery save data?
-The answer is columnar.
+### Question 7: 
+In which format does BigQuery save data? The answer is columnar.
