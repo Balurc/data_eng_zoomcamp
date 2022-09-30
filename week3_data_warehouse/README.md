@@ -23,7 +23,7 @@ The below table shows the difference between OLTP and OLAP.
 
 ![](images/oltp_olap.png)
 
-By above definition, we can see that data warehouse is an OLAP solution and unlike data lake that follows ETL paradigm, data warehouse usually use ETL paradigm.
+By above definition, we can see that data warehouse is an OLAP solution and unlike data lake that follows ELT paradigm, data warehouse usually use ETL paradigm.
 
 As shown below, a data warehouse receives raw data from many sources (operational system, flat files, etc) that is stored in a staging area before being written to it. As an output, a data warehouse can further be transformed into data marts which is a subset of a data warehouse that is more targeted to end users' purposes (purchasing, sales, inventory, etc).
 
