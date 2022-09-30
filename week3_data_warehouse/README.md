@@ -314,7 +314,7 @@ For more on how to best use BigQuery ML, <a href="https://cloud.google.com/bigqu
 
 ## Integrating BigQuery with Airflow
 
-Here are the steps to create BigQuery tables (external & partitioned) from the parquet files in our GCS (ingested last week).
+Here are the steps to create BigQuery tables (external & partitioned) from the parquet files in our GCS (ingested last week). You can find the codes <a href="https://github.com/Balurc/data_eng_zoomcamp/tree/main/week3_data_warehouse/airflow" target="_blank">here</a>.
 
 1. Copy and create the following folders and files from week 2 course to your week 3 directory in a folder named `airflow`:
     - Copy dags folder and `data_ingestion_gcs_dag.py` file.
