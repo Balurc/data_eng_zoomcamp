@@ -4,7 +4,7 @@ WITH
 fhv_data as (
     select *,
             'Fvh' as service_type
-    from {{ ref('stg_fhv_trip_data') }}
+    from {{ ref('stg_fvh_trip_data') }}
 ),
 
 dim_zones as (

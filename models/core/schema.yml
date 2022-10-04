@@ -24,7 +24,7 @@ models:
             - not_null:
                 severity: error
 
-  - name: fact_fhv_trips
+  - name: fact_fvh_trips
     description: >
       Taxi trips corresponding to For Hire Vehicles.
       The table contains records where both pickup and dropoff locations are valid and known zones. 
