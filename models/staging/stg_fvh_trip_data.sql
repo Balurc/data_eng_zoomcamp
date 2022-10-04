@@ -9,9 +9,9 @@ select
 
     -- timestamps
     cast(pickup_datetime as timestamp) as pickup_datetime,
-    cast(dropoff_datetime as timestamp) as dropoff_datetime,
+    cast(dropoff_datetime as timestamp) as dropoff_datetime
 
     -- trip info
-    sr_flag,
+    -- sr_flag,
 from {{ source('staging','external_fhv_tripdata') }}
 where dispatching_base_num is not null 
