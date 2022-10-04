@@ -8,6 +8,7 @@ sources:
       tables:
           - name: green_tripdata_external_table
           - name: yellow_tripdata_external_table
+          - name: external_fhv_tripdata
 
 models:
     - name: stg_green_trip_data
@@ -193,7 +194,7 @@ models:
           - name: Total_amount 
             description: The total amount charged to passengers. Does not include cash tips.
 
-    - name: stg_fhv_tripdata
+    - name: stg_fhv_trip_data
       description: >
         Trips made by For Hire Vehicles. The records were collected and provided to the NYC Taxi and Limousine Commission (TLC) by
         technology service providers.
