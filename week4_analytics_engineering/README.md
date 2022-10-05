@@ -570,6 +570,7 @@ Follow these guides on dbt best practices:
 - <a href="https://airbyte.com/blog/best-practices-dbt-style-guide">Practical guides</a>
 
 
+
 ## Homework
 
 ### Question 1:
