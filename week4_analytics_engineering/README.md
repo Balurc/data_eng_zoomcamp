@@ -138,6 +138,7 @@ Before we start creating the data models, let's first have look at the structure
   - View - is exactly the same as table but here it would be something like `CREATE` or `ALTER`.
   - Incremental - run our model and transform and insert latest data only to our table, useful for data that doesn't really change everyday.
   - Ephemeral - creates `CTE` that separated in another file.
+ 
 
 #### The FROM clause
 
@@ -236,5 +237,333 @@ Let's create our first model and follow these steps:
 4. You can run the model with `dbt run --select your_model_name` or `dbt run -m your_model_name` or `dbt run -f your_model_name`. For more on dbt commands you can visit <a href="https://docs.getdbt.com/reference/dbt-commands">here</a>.
 
 5. Now go to your BigQuery and you should see there is a view created under your development dataset named `stg_green_trip_data`.
+
   
-  
+#### Macros
+
+Macros are similar to functions in programming language that are written in Jinja template. dbt already has some macros inside such as `source()`, `ref()` and `config()`. Macros are going to return code, not a result like an UDF.
+
+Macros enable us to:
+- Use control structures such as if statements or for loops in SQL.
+- Use environment variables in our dbt project for production.
+- Operate on the results of one query to generate another query.
+- Abstract snippets of SQL into reusable macros - analogous to functions in most programming langguages.
+- Use the macro for another project in our project.
+
+Macros are stored in a macros directory, in a SQL file. Here is an example of macros:
+
+    {# This macro returns the description of the payment_type #}
+
+    {% macro get_payment_type_description(payment_type) %}
+
+        case {{ payment_type }}
+            when 1 then 'Credit card'
+            when 2 then 'Cash'
+            when 3 then 'No charge'
+            when 4 then 'Dispute'
+            when 5 then 'Unknown'
+            when 6 then 'Voided trip'
+        end
+
+    {% endmacro %}
+
+- It starts with `macro` keyword that indicates a macro definition and ends with `endmacro` keyword.
+- The macro will accept a parameter `payment_type` and we use expression delimiters `{{...}}` to access the parameter. 
+- The {#...#} delimiter is for comments, to explain what the marcos are trying to do.
+- The {%...%} delimiter is the control blocks for macros statements/definitions.
+- The {{...}} delimiter is macro expressions (literals, math, comparisons, logic, macro calls, etc).
+
+Follow these steps to include macros in our dbt project:
+1. Go to `macros` folder and create a new SQL file named `get_payment_type_description.sql`.
+
+2. Then write the following statements in the file to map the payment type with its description, and click save.
+
+        {# This macro returns the description of the payment_type #}
+
+        {% macro get_payment_type_description(payment_type) %}
+
+            case {{ payment_type }}
+                when 1 then 'Credit card'
+                when 2 then 'Cash'
+                when 3 then 'No charge'
+                when 4 then 'Dispute'
+                when 5 then 'Unknown'
+                when 6 then 'Voided trip'
+            end
+
+        {% endmacro %}
+
+3. Now go to `stg_green_trip_data.sql` and under the `SELECT` statements add the following, and click save.
+
+  {{ get_payment_type_description('payment_type') }} as payment_type_description
+
+4. Once ready, you can run the model with `dbt run --select your_model_name` in my case it's `dbt run --select stg_green_trip_data.sq`.
+
+5. Now go to your BigQuery and on your `stg_green_trip_data` view you should see there is a new column created `payment_type_description`.
+
+
+#### Packages
+
+Just like in other programming langguages, in dbt we can use packages (or modules/libraries in other programming languages). Packages are basically the standalone dbt projects that have modules and macros of their own (such as test). 
+
+To import a package we first need to create `packages.yml` file (main directory of our project) that will define the packages that we want to import. You can find a lot of useful packages <a href="https://hub.getdbt.com/">here</a>.
+
+    packages:
+      - package: dbt-labs/dbt_utils
+        version: 0.8.0
+
+We can access the marcos inside the packages in a similar way as how we access a class methods in Python. To use a package, we first need to install them. We can intall a package by running the `dbt deps` command.
+
+Follow these steps to include packages in our dbt project:
+
+1. Go to your the main directory of your project and create `packages.yml` file and import the following package, click save.
+
+        packages:
+          - package: dbt-labs/dbt_utils
+            version: 0.8.0
+
+2. Next in order to use the package, we need to install it first. Now run `dbt deps` command on your dbt Cloud to install the package. After you run the command, you can see a `dbt_utils` folder (under `dbt_packages` folder) that contains all the macros from `dbt_utils` package.
+
+3. Now let's create a surrogate key with the help of `dbt_utils` macro: `surrogate_key()`. Add the following in your `SELECT` statement and click save.
+
+    {{ dbt_utils.surrogate_key(['vendorid', 'lpep_pickup_datetime']) }} as tripid
+
+4. Once ready, you can run the model with `dbt run --select your_model_name`. Now go to your BigQuery and on your `stg_green_trip_data` view you should see there is a new column created `tripid`.
+
+
+#### Variables
+
+Variables are useful for defining values that will be used across your project. With macros, they will fetch the data from the variables and translate it during the compilation process.
+
+There are 2 ways we can define environment variables:
+- On CLI
+- On `dbt_project.yml` file, similar to what a global variable is. We define the variables under the `vars` block.
+
+        vars:
+            payment_type_values: [1, 2, 3, 4, 5, 6]
+
+To access the variables, we can user `var()` macro.
+
+    {% if var('is_test_run', default=true) %}
+
+        limit 100
+
+    {% endif %}
+
+
+Follow these steps as an example of how to include variables in our dbt project:
+
+1. Go to your `stg_green_trip_data.sql` file and add the following right after `FROM` clause, click save.
+
+        WHERE vendorid is not null
+        {% if var('is_test_run', default=true) %}
+
+            limit 100
+
+        {% endif %}
+
+2. Once ready, you can run the model with `dbt run --select your_model_name`.
+
+
+#### Creating and using dbt seed
+
+dbt seeds are csv files that we can have in our repo and use them as tables with `ref()` macro. dbt seeds are meant to be used for smaller files (data that will not change).
+
+Follow these steps as an example of how to use dbt seeds in our dbt project:
+
+1. Go to your `seeds` folder and create a new file `taxi_zone_lookup.csv`.
+2. Copy the values in taxi zones lookup file and paste them to `taxi_zone_lookup.csv` file that you just created.
+3. Next, run `dbt seeds` command to load the csv file to database.
+4. Now if you go to your BigQuery and on your development dataset, you should see a new table has been created `taxi_zone_lookup`.
+5. Next let's create a model that is based on the seed we just created. Under `model` folder, go to `core` folder and create a new file `dim_zones.sql`.
+6. Write the following statements:
+
+        {{ config(materialized='table') }}
+
+
+        select 
+            locationid, 
+            borough, 
+            zone, 
+            replace(service_zone,'Boro','Green') as service_zone
+        from {{ ref('taxi_zone_lookup') }}
+
+7. Next create a new file `fact_trips.sql` and write the following statements and click save.
+
+        {{ config(materialized='table') }}
+
+        with green_data as (
+            select *, 
+                'Green' as service_type 
+            from {{ ref('stg_green_trip_data') }}
+        ), 
+
+        yellow_data as (
+            select *, 
+                'Yellow' as service_type
+            from {{ ref('stg_yellow_trip_data') }}
+        ), 
+
+        trips_unioned as (
+            select * from green_data
+            union all
+            select * from yellow_data
+        ), 
+
+        dim_zones as (
+            select * from {{ ref('dim_zones') }}
+            where borough != 'Unknown'
+        )
+        select 
+            trips_unioned.tripid, 
+            trips_unioned.vendorid, 
+            trips_unioned.service_type,
+            trips_unioned.ratecodeid, 
+            trips_unioned.pickup_locationid, 
+            pickup_zone.borough as pickup_borough, 
+            pickup_zone.zone as pickup_zone, 
+            trips_unioned.dropoff_locationid,
+            dropoff_zone.borough as dropoff_borough, 
+            dropoff_zone.zone as dropoff_zone,  
+            trips_unioned.pickup_datetime, 
+            trips_unioned.dropoff_datetime, 
+            trips_unioned.store_and_fwd_flag, 
+            trips_unioned.passenger_count, 
+            trips_unioned.trip_distance, 
+            trips_unioned.trip_type, 
+            trips_unioned.fare_amount, 
+            trips_unioned.extra, 
+            trips_unioned.mta_tax, 
+            trips_unioned.tip_amount, 
+            trips_unioned.tolls_amount, 
+            trips_unioned.ehail_fee, 
+            trips_unioned.improvement_surcharge, 
+            trips_unioned.total_amount, 
+            trips_unioned.payment_type, 
+            trips_unioned.payment_type_description, 
+            trips_unioned.congestion_surcharge
+        from trips_unioned
+        inner join dim_zones as pickup_zone
+        on trips_unioned.pickup_locationid = pickup_zone.locationid
+        inner join dim_zones as dropoff_zone
+        on trips_unioned.dropoff_locationid = dropoff_zone.locationid
+
+Below snippet references `sgt_green_trip_data` model that we created before. Since a model outputs a table/view, we can use it in the `FROM` clause of any query.
+
+    with green_data as (
+        select *, 
+            'Green' as service_type 
+        from {{ ref('stg_green_trip_data') }}
+    )
+
+8. Once ready, you can run the model with `dbt run` to run all the models that we have created so far. You can also use `dbt build` command to run the models, seeds and tests. If you have this error `Access Denied: BigQuery BigQuery: Permission denied while globbing file pattern.`, go to your Google IAM --> your dbt service account and make sure the `viewers` role is assigned.
+
+
+### Testing and documenting dbt models
+
+For a matured project, it is suggested to apply a decent testing method and documentation in our project.
+
+
+#### Testing
+
+Test is an assumption we make about our data or a behavior tha our data should have. Tests in dbt are essentially a `SELECT` sql query. This means we are going to run dbt tests and it's going to compile to a SQL query that will return the amount of failing records that do not follow the assumptions we made about our data.
+
+Tests are defined in the yml file under the column name. dbt provides basic tests to check if the column values are:
+- Unique
+- Not null 
+- Accepted values
+- A foreign key to another table
+
+As an example:
+
+    models:
+        - name: stg_green_tripdata
+          description: >
+            Trip made by green taxis, also known as boro taxis and street-hail liveries.
+            Green taxis may respond to street hails,but only in the areas indicated in green on the
+            map (i.e. above W 110 St/E 96th St in Manhattan and in the boroughs).
+            The records were collected and provided to the NYC Taxi and Limousine Commission (TLC) by
+            technology service providers. 
+          columns:
+              - name: tripid
+                description: Primary key for this table, generated with a concatenation of vendorid+pickup_datetime
+                tests:
+                    - unique:
+                        severity: warn
+                    - not_null:
+                        severity: warn
+
+Above example shows there are two tests `unique` and `not_null` under `tests` and `tripid` block and column. If there is an error, the tests will return a warning in the command line.
+
+
+#### Documentation
+
+dbt provides a way to generate documentation for your dbt project and render it as a website.
+
+The documentation for your project includes:
+- Information about your project: 
+  - Model code (both from the .sql file and compiled)
+  - Model dependencies
+  - Sources
+  - Auto generated DAG from the ref and source macros
+  - Descriptions (from .yml file) and tests 
+- Information about your data warehouse (information_schema):
+  - Column names and data types
+  - Table stats like size and rows
+- dbt docs can also be hosted in dbt cloud
+
+We can document our model in dbt by writing the documentation in the yml file, such as below. Here we write our documentation in the `description` block. 
+
+    models:
+        - name: stg_green_tripdata
+          description: >
+            Trip made by green taxis, also known as boro taxis and street-hail liveries.
+            Green taxis may respond to street hails,but only in the areas indicated in green on the
+            map (i.e. above W 110 St/E 96th St in Manhattan and in the boroughs).
+            The records were collected and provided to the NYC Taxi and Limousine Commission (TLC) by
+            technology service providers. 
+
+dbt docs can be generated on the cloud or locally with `dbt docs generate` command.
+
+
+### Deployment of a dbt project (using dbt Cloud)
+
+Deployment is the process of running the models that we created in development environment, in a production environment. Having a development environment allows us to keep developing without affecting the models already running in the production. Normally, a production environment will have it's own schema in our data warehouse, separated from development environment.  
+
+A development - deployment workflow will typicall look something like this:
+- Develop in a user branch.
+- Open a PR to merge into the main branch.
+- Merge the branch to the main branch.
+- Run the new models in the production environment using the main branch.
+- Schedule the models.
+
+dbt Cloud includes a scheduler where we can create jobs and run them in production.
+- These jobs are going to create the models in the production environment. 
+- A single job can run multiple commands.
+- Jobs can be triggered manually or on schedule.
+- Each job will keep a log of the runs over time.
+- Each run will have the logs for each command.
+- A job could also generate documentation, that could be viewed under the run information.
+- If dbt source freshness was run, the results can also be viewed at the end of a job.
+
+To deploy our models, we will use Continuous Integration (CI) practice. CI is the practice of regularly merge development branches into a central repository, after which automated builds and tests are run.
+The goal is to reduce adding bugs to the production code and maintain a more stable project. How do we do that with dbt?
+- dbt allows us to enable CI on pull requests.
+- Enabled via webhooks from GitHub or GitLab.
+- When a PR is ready to be merged, a webhooks is received in dbt Cloud that will enqueue a new run of the specified job. 
+- The run of the CI job will be against a temporary schema.
+- No PR will be able to be merged unless the run has been completed successfully.
+
+To start deploying our model on dbt Cloud, follow these steps:
+1. Make your first commit and after that the `main` branch will become `read-only`. If we want to keep developing, we need to create a new branch.
+
+2. Next go to `Environments` (on the sidebar) and create a new environment for production. By default, the environment will use the main branch of the repo but you can change it for more complex workflows. We will use `production` dataset so make sure that `production` dataset already created in your BigQuery project.
+
+3. Next, go to the sidebar again and click on `Jobs` to schedule the creation of our data models. Create a new job named `dbt build`, select `Production` environment and check the `Generate Docs` option. Then add these commands `dbt seed`, `dbt run` and `dbt test` and in the Schedule tab check `RUN ON SCHEDULE` option with a timing every day and every 6 hours. Once ready click save and click `Run Now`.
+
+4. Once your jobs have successfully run, you can access the logs and click on `View Documentation` to view the documentation that you have written in the yml file.
+
+
+Follow these guides on dbt best practices:
+- <a href="https://docs.getdbt.com/guides/legacy/best-practices">dbt best practices</a>
+- <a href="https://airbyte.com/blog/best-practices-dbt-style-guide">Practical guides</a>
