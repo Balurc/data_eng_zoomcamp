@@ -92,3 +92,149 @@ The fundamental difference between dbt Core and dbt Cloud is the way we work wit
 
 In this week's course, we are going to transform the raw data and create data models with dbt Cloud. We are also going to do the deployment and orchestration in dbt Cloud. If you want to develop the data models with postgres database, you can do that with dbt Core and running the models through the CLI. 
 
+### Intial Setup
+
+To begin, creates 2 new datasets in your BigQuery and a repository from scratch:
+- 1 datasets for developing evironmrnt, to create the data models.
+- 1 datasets for production, to run the models after deployment.
+- Create a new repository from scratch, here as a <a href="https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/week_4_analytics_engineering" target="_blank">reference</a>.
+
+### dbt Cloud Setup with BigQuery
+
+Follow these steps to setup your dbt Cloud with BigQuery and additionally, you can follow the detailed guides <a href="https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/week_4_analytics_engineering/dbt_cloud_setup.md" target="_blank">here</a>.
+
+1. Create a BigQuery Service Account.
+    - Go <a href="https://console.cloud.google.com/apis/credentials/wizard" target="_blank">here</a> and create a service account. Select `BigQuery Admin` role, click `CONTINUE` and `DONE`.
+    - Next, go to the service account that you just create and click on `KEYS` tab, then click `ADD KEY` and select `CREATE NEW KEY`, pick `JSON` key type and click `CREATE` to create and download your service account key.
+
+2. Create a dbt Cloud Project.
+    - Go <a href="https://www.getdbt.com/pricing/" target="_blank">here</a> and create free dbt developer account. Once logged in, you will be prompt to create a new project.
+    - Next, click on `BEGIN` and select `BigQuery` as your database connection.
+    - Upload the downloaded service account key on the `create from file` option. 
+    - Next, scroll down to the end of the page and in the `Development Credentials` section put the dataset name in the BigQuery where you are going to develop you dbt models.
+    - To finalize, click on `Test` and continue with the setup.
+
+3. Add Github Repository.
+    - Go to your GitHub account, select git clone and paste the SSH key from your repo.
+    - Once you get the deploy key, go to your GitHub repo again and go to the setting tabs. Under security select deploy keys, then click on `add deploy key` and paste the deploy key and tick on "write access" and click `Add Key`.
+
+If you want to use dbt Core instead, follow these guides:
+- Guide to install <a href="https://docs.getdbt.com/dbt-cli/install/overview" target="_blank">dbt Core</a>.
+- Setup  <a href="https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/week_4_analytics_engineering/docker_setup" target="_blank">dbt with BigQuery on Docker</a>.
+
+
+### Development of dbt Models
+
+#### Anatomy of a dbt model
+
+Before we start creating the data models, let's first have look at the structure and elements that we are going to see in dbt:
+
+- `Jinja` in dbt. <a href="https://jinja.palletsprojects.com/en/3.1.x/templates/" target="_blank">Jinja</a> for SQL is a template language for SQL statements and script. Jinja statement starts and ends with 2 curly brackets `{{ sql_statement_here }}`.
+
+- `Macros`. <a href="https://docs.getdbt.com/docs/building-a-dbt-project/jinja-macros#macros">Macros</a> in Jinja are pieces of code that can be reused multiple times – they are analogous to "functions" in other programming languages, and are extremely useful if you find yourself repeating code across multiple models.
+
+- By default, dbt provides 4 materialization strategies:
+  - Table - drop the table if it already exists in our data warehouse and create the table in the schema that we are working with.
+  - View - is exactly the same as table but here it would be something like `CREATE` or `ALTER`.
+  - Incremental - run our model and transform and insert latest data only to our table, useful for data that doesn't really change everyday.
+  - Ephemeral - creates `CTE` that separated in another file.
+
+#### The FROM clause
+
+There are 2 sources in dbt that can be defined from the `FROM` clause:
+- <a href="https://docs.getdbt.com/docs/building-a-dbt-project/using-sources">Sources</a>; the data loaded to our data warehoouse that we use as sources for our data models.
+  - We use `source()` function and the configuration is defined in the yml files (model's folder).
+  - Used with source macro that will resolve the name to the right schema, plus build the dependencies automatically.
+  - Source freshness can be defined and tested, which can be useful to check whether our data pipelines are working properly.
+
+An example of how to declare a source in a yml file:
+
+    sources:
+        - name: staging
+          database: production
+          schema: trips_data_all
+
+          loaded_at_field: record_loaded_at
+          tables:
+            - name: green_tripdata
+            - name: yellow_tripdata
+              freshness:
+                error_after: {count: 6, period: hour}
+
+An example of how to reference source in a SQL statement under `FROM` clause: 
+
+    FROM {{ source('staging','yellow_tripdata') }}
+
+- <a href="https://docs.getdbt.com/docs/building-a-dbt-project/seeds">Seeds</a>; csv files stored under `seeds` folder and can be loaded to our data warehouse.
+  - Use `ref()` function to refer to the seed in the model's folder.
+  - Run `dbt seed -s filename` to create a table in our data warehouse.
+  - Recommended for data that doesn't change frequently.
+
+An example of how to reference seeds in a SQL statement under `FROM` clause: 
+
+    SELECT
+        locationid,
+        borough,
+        zone,
+        replace(service_zone, 'Boro', 'Green') as service_zone
+    FROM {{ ref('taxi_zone_lookup) }}
+
+#### Define a source and develop models.
+
+Let's create our first model and follow these steps:
+1. On your dbt Cloud, create 2 folders under your `models` folder named as `staging` and `core`. And delete the `example` folder.
+
+2. Under staging create a yaml file named `schema.yml` and let's define our sources and tables here. Write below statements and click save.
+
+        version: 2
+
+        sources:
+            - name: staging
+              database: your_projectid
+              schema: trips_data_all
+
+              tables:
+                  - name: green_tripdata_external_table
+                  - name: yellow_tripdata_external_table
+
+3. Next, create a new SQL file named `sgt_green_trip_data.sql` and let's write something to create our first model as below and click save.
+        # We'll create a view
+        {{ config(materialized='view') }}
+
+        SELECT
+                -- identifiers
+            cast(vendorid as integer) as vendorid,
+            cast(ratecodeid as integer) as ratecodeid,
+            cast(pulocationid as integer) as  pickup_locationid,
+            cast(dolocationid as integer) as dropoff_locationid,
+
+            -- timestamps
+            cast(lpep_pickup_datetime as timestamp) as pickup_datetime,
+            cast(lpep_dropoff_datetime as timestamp) as dropoff_datetime,
+
+            -- trip info
+            store_and_fwd_flag,
+            cast(passenger_count as integer) as passenger_count,
+            cast(trip_distance as numeric) as trip_distance,
+            cast(trip_type as integer) as trip_type,
+
+                -- payment info
+            cast(fare_amount as numeric) as fare_amount,
+            cast(extra as numeric) as extra,
+            cast(mta_tax as numeric) as mta_tax,
+            cast(tip_amount as numeric) as tip_amount,
+            cast(tolls_amount as numeric) as tolls_amount,
+            cast(ehail_fee as numeric) as ehail_fee,
+            cast(improvement_surcharge as numeric) as improvement_surcharge,
+            cast(total_amount as numeric) as total_amount,
+            cast(payment_type as integer) as payment_type,
+            cast(congestion_surcharge as numeric) as congestion_surcharge
+
+        FROM {{ source('staging', 'green_tripdata_external_table') }}
+        LIMIT 100
+
+4. You can run the model with `dbt run --select your_model_name` or `dbt run -m your_model_name` or `dbt run -f your_model_name`. For more on dbt commands you can visit <a href="https://docs.getdbt.com/reference/dbt-commands">here</a>.
+
+5. Now go to your BigQuery and you should see there is a view created under your development dataset named `stg_green_trip_data`.
+  
+  
