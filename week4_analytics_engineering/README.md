@@ -79,7 +79,7 @@ dbt allows us to transform raw data with SQL following software engineering best
 
 ![](images/dbt_works.png)
 
-It works by adding model layers to the data warehouse and the purpose of these models is to transform the raw data into tables or views. The transformed data will later be persited back to the data warehouse. A model layer is a SQL file that contains a set of `SELECT` instructions (DQL) with no DDL or DML instructions. dbt will compile the code by creating the DDL or DML file and push it to the data warehouse.
+It works by adding model layers to the data warehouse and the purpose of these models is to transform the raw data into tables or views. The transformed data will later be persited back to the data warehouse. A model layer is a SQL file that contains a set of `SELECT` instructions with no DDL instructions. dbt will compile the code by creating the DDL or DML file and push it to the data warehouse.
 
 ### How to use dbt?
 
