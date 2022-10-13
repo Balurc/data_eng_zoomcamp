@@ -1,6 +1,6 @@
 # Week 5 - Course Notes
 
-This week's course will discuss about data ingestion, you can find the repo  <a href="https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/week_5_batch_processing" target="_blank">here</a> and the accompanying course videos  <a href="https://www.youtube.com/watch?v=dcHe5Fl3MF8&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=48" target="_blank">here</a>.
+This week's course will discuss batch data processing, you can find the course repo  <a href="https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/week_5_batch_processing" target="_blank">here</a> and the accompanying course videos  <a href="https://www.youtube.com/watch?v=dcHe5Fl3MF8&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=48" target="_blank">here</a>.
 
 This notes will cover:
 - Introduction to batch processing.
@@ -326,7 +326,7 @@ You can output and store the results in parquet format and to reduce the amount 
 
 - Spark driver is the program that submits a job to a Spark master. A driver can be operator in Airflow or can be our laptop.
 
-- Spark master is the program that coordinates the distributions of tasks/jobs to executors. Spark master keeps track of which machines are healthy and if some machine becomes unhealthy it reassigns the work
+- Spark master is the program that coordinates the distributions of tasks/jobs to executors. Spark master keeps track of which machines are healthy and if some machine becomes unhealthy it reassigns the work.
 
 - Spark executors are the machines that are doing the actual computations (pull and process data).
 
