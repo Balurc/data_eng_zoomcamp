@@ -108,7 +108,7 @@ Airflow Setup:
       dockerfile: ./Dockerfile
     - Add 4 new environment variables:
     
-          GOOGLE_APPLICATION_CREDENTIALS: /.google/credentials/google_credentials.json (It is recommended to you the full path)
+          GOOGLE_APPLICATION_CREDENTIALS: /.google/credentials/google_credentials.json (It is recommended to use the full path)
           AIRFLOW_CONN_GOOGLE_CLOUD_DEFAULT: 'google-cloud-platform://?extra__google_cloud_platform__key_path=/.google/credentials/google_credentials.json'
           GCP_PROJECT_ID: '<your_gcp_project_id>'
           GCP_GCS_BUCKET: '<your_bucket_id>'
