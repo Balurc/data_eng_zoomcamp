@@ -61,7 +61,7 @@ default_args = {
 }
 
 # a function to donwload, parquetize and upload yellow, green and FHV taxi data to google cloud storage
-def donwload_parquetize_upload_dag(
+def download_parquetize_upload_dag(
     dag,
     url_template,
     local_parquet_path_template,
@@ -131,7 +131,7 @@ green_taxi_data_dag = DAG(
     tags=['dtc-de'],
 )
 
-donwload_parquetize_upload_dag(
+download_parquetize_upload_dag(
     dag=green_taxi_data_dag,
     url_template=GREEN_TAXI_URL_TEMPLATE,
     local_parquet_path_template=GREEN_TAXI_PARQUET_FILE_TEMPLATE,
@@ -154,7 +154,7 @@ fhv_taxi_data_dag = DAG(
     tags=['dtc-de'],
 )
 
-donwload_parquetize_upload_dag(
+download_parquetize_upload_dag(
     dag=fhv_taxi_data_dag,
     url_template=FHV_TAXI_URL_TEMPLATE,
     local_parquet_path_template=FHV_TAXI_PARQUET_FILE_TEMPLATE,
