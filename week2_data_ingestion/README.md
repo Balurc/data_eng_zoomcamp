@@ -48,7 +48,7 @@ This pipeline is what we call as data workflow, and sometimes we also refer it a
 There are many tools that exist to do workflow orchestration, the most popular ones are as below. This course will use Airflow as the workflow orchestration tool.
 - <a href="https://github.com/spotify/luigi">Luigi</a>
 - <a href="https://github.com/apache/airflow">Airflow</a>
-- <a href="https://github.com/PrefectHQ/prefect">Airflow</a>
+- <a href="https://github.com/PrefectHQ/prefect">Prefect</a>
 
 
 ## Workflow Orchestration & Data Ingestion with Airflow
